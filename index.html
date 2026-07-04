@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Boykot Rehberi</title>
+  <meta name="theme-color" content="#111827">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div class="logo">🔍</div>
+      <h1>Boykot Rehberi</h1>
+      <p>Markayı yaz, durumu hemen gör.</p>
+    </header>
+
+    <section class="searchBox">
+      <input id="search" type="search" placeholder="Marka ara... örn. Ariel, KitKat, Dove" autocomplete="off" autofocus>
+      <div class="chips">
+        <button data-filter="all" class="active">Hepsi</button>
+        <button data-filter="boykot">🔴 Boykot</button>
+        <button data-filter="dikkat">🟠 Dikkat</button>
+        <button data-filter="alternatif">🟢 Alternatif</button>
+        <button data-filter="inceleniyor">⚪ İnceleniyor</button>
+      </div>
+    </section>
+
+    <section id="results" class="results"></section>
+
+    <footer>
+      <p>Verileri <b>data.json</b> dosyasından güncelleyebilirsin.</p>
+    </footer>
+  </main>
+
+  <template id="cardTemplate">
+    <article class="card">
+      <div class="status"></div>
+      <h2></h2>
+      <div class="grid">
+        <span>Ana Firma</span><b class="firma"></b>
+        <span>Kategori</span><b class="kategori"></b>
+        <span>Kod</span><b class="kod"></b>
+        <span>Alternatif</span><b class="alternatif"></b>
+      </div>
+      <p class="note"></p>
+      <a class="source" target="_blank" rel="noopener">Kaynak</a>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
