@@ -1,30 +1,205 @@
-const VERSION="20260705-v2-boykotta-degil";
-let DATA=[]; let view="home"; let filter="all"; let favorites=loadFavorites(); let currentTitle="Tüm Markalar";
-const $=id=>document.getElementById(id); const search=$("search"), clearBtn=$("clearBtn"), stats=$("stats"), quickFilters=$("quickFilters"), sectionTitle=$("sectionTitle"), results=$("results"), themeBtn=$("themeBtn");
-function esc(s){return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
-function norm(s){return String(s||"").toLocaleLowerCase("tr-TR").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’'`´]/g,"").replace(/[^a-z0-9ğüşöçıİĞÜŞÖÇ]+/gi," ").trim()}
-function get(o,names){for(const n of names){if(o&&o[n]!==undefined&&o[n]!==null&&String(o[n]).trim()!=="")return String(o[n]).trim()}return""}
-function loadFavorites(){try{return JSON.parse(localStorage.getItem("boykot_favorites_v3")||"[]")}catch{return[]}}
-function saveFavorites(){localStorage.setItem("boykot_favorites_v3",JSON.stringify(favorites))}
-function favKey(m){return norm(m)} function isFav(m){return favorites.includes(favKey(m))} function toggleFav(m){const k=favKey(m); favorites=isFav(m)?favorites.filter(x=>x!==k):[...favorites,k]; saveFavorites(); render()}
-function rawStatus(r,kod){const d=norm(get(r,["durum","Durum","status"])); if(d.includes("boykottadegil")||d.includes("boykotta degil")||d==="safe")return"safe"; if(d.includes("alternatif"))return"alternatif"; if(d.includes("dikkat"))return"dikkat"; if(d.includes("incelen"))return"inceleme"; if(/^E/i.test(kod))return"safe"; if(/^C/i.test(kod))return"alternatif"; if(/^B/i.test(kod))return"dikkat"; if(/^D/i.test(kod))return"inceleme"; return"boykot"}
-const statusLabel={boykot:"🔴 Boykot",dikkat:"🟠 Dikkat",alternatif:"🟢 Alternatif",safe:"✅ Boykotta Değil",inceleme:"⚪ İnceleniyor"};
-function hasAlternative(x){const a=norm(x.alternatif);return !!a&&!a.includes("alternatif manuel eklenmeli")}
-function normalizeItem(raw,i){const marka=get(raw,["marka","Marka","brand"])||`Marka ${i+1}`; const anaFirma=get(raw,["anaFirma","anafirma","Ana Firma","AnaFirma","ana_firma"])||marka; const kod=get(raw,["kod","Kod","code"])||"D1"; const kategori=get(raw,["kategori","Kategori","category"]); const alternatif=get(raw,["alternatif","Alternatif","alternative"]); const kaynak=get(raw,["kaynak","Kaynak","kanyak","source","link"]); const not=get(raw,["not","Not","note"]); const status=rawStatus(raw,kod); const hay=norm([marka,anaFirma,kod,kategori,alternatif,kaynak,not,statusLabel[status]].join(" ")); return{marka,anaFirma,kod,kategori,alternatif,kaynak,not,status,hay}}
-async function clearOldCaches(){try{if("caches" in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)))}}catch(e){}}
-async function init(){applyTheme(); await clearOldCaches(); try{const res=await fetch(`data.json?v=${VERSION}`,{cache:"reload"}); if(!res.ok)throw new Error(`data.json yüklenemedi: ${res.status}`); const json=await res.json(); const list=Array.isArray(json)?json:(Array.isArray(json.data)?json.data:[]); DATA=list.map(normalizeItem).sort((a,b)=>a.marka.localeCompare(b.marka,"tr")); render()}catch(err){stats.innerHTML="";quickFilters.innerHTML="";sectionTitle.innerHTML="";results.innerHTML=`<div class="empty"><b>Veri yüklenemedi.</b><br>${esc(err.message)}<br><br>data.json dosyası index.html ile aynı klasörde olmalı.</div>`}}
-function counts(){return{total:DATA.length,boykot:DATA.filter(x=>x.status==="boykot").length,dikkat:DATA.filter(x=>x.status==="dikkat").length,alternatif:DATA.filter(x=>x.status==="alternatif").length,safe:DATA.filter(x=>x.status==="safe").length,inceleme:DATA.filter(x=>x.status==="inceleme").length,altli:DATA.filter(hasAlternative).length,firmalar:new Set(DATA.map(x=>x.anaFirma||"Belirtilmemiş")).size}}
-function renderStats(){const c=counts(); stats.innerHTML=`<div class="stat"><b>${c.total}</b><small>Toplam</small></div><div class="stat red"><b>${c.boykot}</b><small>Boykot</small></div><div class="stat safe"><b>${c.safe}</b><small>Boykotta Değil</small></div><div class="stat green"><b>${c.altli}</b><small>Alternatifli</small></div><div class="stat gray"><b>${c.inceleme}</b><small>İnceleniyor</small></div>`}
-function renderFilters(){const arr=[["all","Tümü"],["boykot","🔴 Boykot"],["safe","✅ Boykotta Değil"],["altli","🟢 Alternatifli"],["inceleme","⚪ İnceleniyor"],["fav","⭐ Favoriler"]]; quickFilters.innerHTML=arr.map(([k,l])=>`<button class="chip ${filter===k?'active':''}" data-filter="${k}" type="button">${l}</button>`).join("")}
-function filteredList(base=DATA){const q=norm(search.value);return base.filter(x=>{const okQ=!q||x.hay.includes(q); const okF=filter==="all"||(filter==="boykot"&&x.status==="boykot")||(filter==="safe"&&x.status==="safe")||(filter==="altli"&&hasAlternative(x))||(filter==="inceleme"&&x.status==="inceleme")||(filter==="fav"&&isFav(x.marka)); return okQ&&okF}).sort((a,b)=>isFav(b.marka)-isFav(a.marka)||a.marka.localeCompare(b.marka,"tr"))}
-function badge(x){return`<span class="badge ${x.status}">${statusLabel[x.status]||"Kod"} <b>${esc(x.kod||"")}</b></span>`}
-function tagHtml(alt,status){if(status==="safe"&&!alt)return`<div class="box alt"><span>Durum</span><b>Bu marka boykot listesinde olmayanlar bölümüne eklendi.</b></div>`; if(!hasAlternative({alternatif:alt}))return`<div class="box alt"><span>Alternatif</span><b>-</b></div>`; const tags=alt.split(/[;,•]/).map(x=>x.trim()).filter(Boolean).slice(0,9); return`<div class="box alt"><span>Alternatif</span><div class="tags">${tags.map(t=>`<em>${esc(t)}</em>`).join("")}</div></div>`}
-function card(x){return`<article class="card ${x.status}" data-brand="${encodeURIComponent(x.marka)}"><div class="cardTop"><div><div class="badgeLine">${badge(x)}${hasAlternative(x)?'<span class="badge alternatif">🟢 Alternatif var</span>':''}</div><h3>${esc(x.marka)}</h3><div class="company">🏢 ${esc(x.anaFirma||"Belirtilmemiş")}</div></div><button class="fav" data-fav="${encodeURIComponent(x.marka)}" type="button">${isFav(x.marka)?"★":"☆"}</button></div><div class="meta"><div class="box"><span>Kategori</span><b>${esc(x.kategori||"Belirtilmemiş")}</b></div><div class="box"><span>Kod</span><b>${esc(x.kod||"-")}</b></div></div>${tagHtml(x.alternatif,x.status)}<button class="more" type="button">Ayrıntıları Gör →</button></article>`}
-function renderHome(list=filteredList(),title=currentTitle){renderStats();renderFilters();sectionTitle.innerHTML=`<h2>${esc(title)}</h2><span>${list.length} sonuç</span>`;results.innerHTML=list.length?list.slice(0,700).map(card).join("")+(list.length>700?'<div class="empty">İlk 700 sonuç gösteriliyor. Daha dar arama yap.</div>':""):'<div class="empty">Sonuç bulunamadı.</div>'}
-function groupBy(key,base=DATA){const m=new Map();for(const x of base){const name=x[key]||"Belirtilmemiş";if(!m.has(name))m.set(name,[]);m.get(name).push(x)}return[...m.entries()].sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0],"tr"))}
-function renderGroups(key,title,attr,base=DATA){renderStats();quickFilters.innerHTML="";search.value="";const g=groupBy(key,base);sectionTitle.innerHTML=`<h2>${title}</h2><span>${g.length} liste</span>`;results.innerHTML=g.map(([name,items])=>`<div class="group" ${attr}="${encodeURIComponent(name)}"><div><b>${esc(name)}</b><br><small>${items.slice(0,4).map(x=>esc(x.marka)).join(", ")}${items.length>4?"...":""}</small></div><div class="count">${items.length}</div></div>`).join("")}
-function renderAbout(){const c=counts();stats.innerHTML="";quickFilters.innerHTML="";sectionTitle.innerHTML="";search.value="";results.innerHTML=`<section class="aboutHero"><h2>📖 Boykot Rehberi</h2><p>Markaları, ana firmaları, kategorileri ve alternatifleri hızlıca bulmak için hazırlanmış mobil uyumlu rehber.</p></section><div class="aboutGrid"><div class="aboutCard"><h3>📊 Liste Durumu</h3><p><b>${c.total}</b> toplam kayıt var. Bunların <b>${c.boykot}</b> tanesi boykot, <b>${c.safe}</b> tanesi boykotta değil bölümünde, <b>${c.altli}</b> tanesinde alternatif bilgisi var.</p></div><div class="aboutCard"><h3>✅ Boykotta Değil</h3><p>Bu bölüm, eklenen alternatif listesinden gelen ve ana boykot listesinde bulunmayan markaları gösterir.</p></div><div class="aboutCard"><h3>🔍 Nasıl Aranır?</h3><p>Arama kutusuna marka adı, ana firma, kategori veya alternatif ürün yazabilirsin. Örneğin: P&G, Temizlik, Peros.</p></div><div class="aboutCard"><h3>🏢 Ana Firmalar</h3><p>Aynı şirkete ait markaları görmek için alt menüden Firmalar bölümünü aç.</p></div><div class="aboutCard"><h3>⭐ Favoriler</h3><p>Yıldız işaretine basarak markaları favorilere ekleyebilir, sonra filtrelerden Favoriler bölümünden bulabilirsin.</p></div><div class="aboutCard"><h3>🟢 Alternatifler</h3><p>Alternatif olarak gösterilen ürünler aynı ürün grubunda değerlendirilebilecek seçeneklerdir. Satın almadan önce kendi araştırmanı yapman tavsiye edilir.</p></div><div class="aboutCard"><h3>⚠️ Bilgilendirme</h3><p>Bu uygulama yalnızca bilgilendirme amacıyla hazırlanmıştır. Bilgiler farklı kaynaklardan derlenmiştir ve zamanla değişebilir. Güncel bilgileri bağımsız kaynaklardan doğrulamanız önerilir.</p></div><div class="aboutCard"><h3>🔄 Güncelleme</h3><p>Yeni marka eklemek veya bilgileri değiştirmek için data.json dosyasını güncellemen yeterlidir.</p></div></div>`}
-function render(){document.querySelectorAll(".bottomNav button").forEach(b=>b.classList.toggle("active",b.dataset.view===view)); if(view==="home")return renderHome(); if(view==="boykot"){filter="boykot";currentTitle="🔴 Boykot Listesi";return renderHome(filteredList(),currentTitle)} if(view==="safe"){filter="safe";currentTitle="✅ Boykotta Değil";return renderHome(filteredList(),currentTitle)} if(view==="companies")return renderGroups("anaFirma","🏢 Ana Firmalar","data-company"); if(view==="about")return renderAbout()}
-function detail(x){const d=$("detailDialog"), c=$("detailContent");c.innerHTML=`<div class="detailHead"><h2>${esc(x.marka)}</h2><p>${esc(x.anaFirma||"Belirtilmemiş")}</p></div><div class="detailBody"><div class="detailLine"><span>Durum</span><b>${statusLabel[x.status]||"-"}</b></div><div class="detailLine"><span>Ana Firma</span><b>${esc(x.anaFirma||"Belirtilmemiş")}</b></div><div class="detailLine"><span>Kategori</span><b>${esc(x.kategori||"Belirtilmemiş")}</b></div><div class="detailLine"><span>Kod</span><b>${esc(x.kod||"-")}</b></div><div class="detailLine"><span>Alternatif</span><b>${esc(x.alternatif||"-")}</b></div><div class="detailLine"><span>Not</span><b>${esc(x.not||"-")}</b></div><div class="detailLine"><span>Kaynak</span><b>${/^https?:\/\//.test(x.kaynak)?`<a href="${esc(x.kaynak)}" target="_blank" rel="noopener">Kaynağı aç</a>`:esc(x.kaynak||"-")}</b></div></div>`;d.showModal()}
-search.addEventListener("input",()=>{view="home";filter="all";currentTitle="Arama Sonuçları";render()}); clearBtn.addEventListener("click",()=>{search.value="";filter="all";view="home";currentTitle="Tüm Markalar";render()}); quickFilters.addEventListener("click",e=>{const b=e.target.closest("[data-filter]");if(!b)return;filter=b.dataset.filter;view="home";currentTitle=b.textContent.trim();render()}); document.querySelectorAll(".bottomNav button").forEach(b=>b.addEventListener("click",()=>{view=b.dataset.view; if(view==="home"){filter="all";currentTitle="Tüm Markalar"} render()})); results.addEventListener("click",e=>{const fav=e.target.closest("[data-fav]");if(fav){e.stopPropagation();toggleFav(decodeURIComponent(fav.dataset.fav));return}const card=e.target.closest("[data-brand]");if(card){const item=DATA.find(x=>x.marka===decodeURIComponent(card.dataset.brand));if(item)detail(item);return}const comp=e.target.closest("[data-company]");if(comp){const name=decodeURIComponent(comp.dataset.company);search.value=name;view="home";filter="all";currentTitle=`🏢 ${name}`;render()}}); $("closeDialog").addEventListener("click",()=>$("detailDialog").close()); themeBtn.addEventListener("click",()=>{document.body.classList.toggle("dark");localStorage.setItem("boykot_theme",document.body.classList.contains("dark")?"dark":"light");themeBtn.textContent=document.body.classList.contains("dark")?"☀️":"🌙"}); function applyTheme(){const t=localStorage.getItem("boykot_theme");if(t==="dark")document.body.classList.add("dark");themeBtn.textContent=document.body.classList.contains("dark")?"☀️":"🌙"}
-if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).catch(()=>{});navigator.serviceWorker.register("sw.js?v="+VERSION).catch(()=>{})} init();
+const state = {
+  data: [],
+  view: 'home',
+  filter: 'all',
+  q: '',
+  lang: localStorage.getItem('lang') || 'tr',
+  theme: localStorage.getItem('theme') || 'light'
+};
+
+const T = {
+  tr: {
+    appTitle:'Boykot Rehberi', appSubtitle:'Marka, ana firma ve alternatifleri hızlıca ara.',
+    searchPlaceholder:'Marka, ana firma, kategori veya alternatif ara...',
+    navHome:'Ana Sayfa', navCompanies:'Ana Firmalar', navCategories:'Kategoriler', navSafe:'Boykotta Değil', navAbout:'Hakkında', close:'Kapat',
+    all:'Tümü', boycott:'Boykot', caution:'Dikkat', alternative:'Alternatif', notBoycotted:'Boykotta Değil', review:'İnceleniyor',
+    brands:'Marka', parentCompany:'Ana Firma', category:'Kategori', alternatives:'Alternatifler', note:'Not', source:'Kaynak', code:'Kod', details:'Detay', openSource:'Kaynağı Aç',
+    noResults:'Sonuç bulunamadı.', companies:'Ana Firmalar', categories:'Kategoriler', brandsCount:'marka', showing:'Gösterilen',
+    aboutTitle:'📖 Kullanım Bilgisi', aboutIntro:'Bu uygulama markalar, ana firmalar ve alternatif seçenekler hakkında hızlı bilgi vermek için hazırlanmıştır.',
+    howSearch:'🔍 Nasıl aranır?', howSearchText:'Arama kutusuna marka adı, ana firma, kategori, alternatif veya not yazarak sonuçlara ulaşabilirsin.',
+    sections:'📂 Bölümler', sectionsText:'Ana Sayfa tüm listeyi, Ana Firmalar şirketlere göre gruplamayı, Kategoriler ürün gruplarını, Boykotta Değil ise alternatif.ods listesinden eklenen markaları gösterir.',
+    disclaimer:'⚠️ Bilgilendirme', disclaimerText:'Bilgiler farklı kaynaklardan derlenmiştir. Satın alma kararı vermeden önce güncel bilgileri bağımsız kaynaklardan da kontrol etmen tavsiye edilir.',
+    updates:'🔄 Güncellemeler', updatesText:'Yeni markalar data.json dosyası güncellenerek eklenebilir. Uygulamayı GitHub Pages üzerinde kullanabilirsin.'
+  },
+  en: {
+    appTitle:'Boycott Guide', appSubtitle:'Quickly search brands, parent companies and alternatives.',
+    searchPlaceholder:'Search brand, parent company, category or alternative...',
+    navHome:'Home', navCompanies:'Parent Companies', navCategories:'Categories', navSafe:'Not Boycotted', navAbout:'About', close:'Close',
+    all:'All', boycott:'Boycott', caution:'Caution', alternative:'Alternative', notBoycotted:'Not Boycotted', review:'Under Review',
+    brands:'Brands', parentCompany:'Parent Company', category:'Category', alternatives:'Alternatives', note:'Note', source:'Source', code:'Code', details:'Details', openSource:'Open Source',
+    noResults:'No results found.', companies:'Parent Companies', categories:'Categories', brandsCount:'brands', showing:'Showing',
+    aboutTitle:'📖 About & How to Use', aboutIntro:'This app helps you quickly check brands, parent companies and alternative options.',
+    howSearch:'🔍 How to search', howSearchText:'Type a brand, parent company, category, alternative or note into the search box to filter the list.',
+    sections:'📂 Sections', sectionsText:'Home shows the full list, Parent Companies groups by company, Categories groups by product type, and Not Boycotted shows brands added from the alternatives file.',
+    disclaimer:'⚠️ Disclaimer', disclaimerText:'Information is compiled from different sources. Before making purchasing decisions, you should also verify current information independently.',
+    updates:'🔄 Updates', updatesText:'New brands can be added by updating data.json. The app can be published on GitHub Pages.'
+  },
+  de: {
+    appTitle:'Boykott-Ratgeber', appSubtitle:'Marken, Mutterfirmen und Alternativen schnell suchen.',
+    searchPlaceholder:'Marke, Mutterfirma, Kategorie oder Alternative suchen...',
+    navHome:'Start', navCompanies:'Mutterfirmen', navCategories:'Kategorien', navSafe:'Nicht boykottiert', navAbout:'Info', close:'Schließen',
+    all:'Alle', boycott:'Boykott', caution:'Achtung', alternative:'Alternative', notBoycotted:'Nicht boykottiert', review:'In Prüfung',
+    brands:'Marken', parentCompany:'Mutterfirma', category:'Kategorie', alternatives:'Alternativen', note:'Notiz', source:'Quelle', code:'Code', details:'Details', openSource:'Quelle öffnen',
+    noResults:'Keine Ergebnisse gefunden.', companies:'Mutterfirmen', categories:'Kategorien', brandsCount:'Marken', showing:'Angezeigt',
+    aboutTitle:'📖 Info & Nutzung', aboutIntro:'Diese App hilft dir, Marken, Mutterfirmen und Alternativen schnell zu prüfen.',
+    howSearch:'🔍 Suche', howSearchText:'Gib Marke, Mutterfirma, Kategorie, Alternative oder Notiz in das Suchfeld ein, um die Liste zu filtern.',
+    sections:'📂 Bereiche', sectionsText:'Start zeigt die komplette Liste, Mutterfirmen gruppiert nach Unternehmen, Kategorien nach Produktgruppen und Nicht boykottiert zeigt Marken aus der Alternativen-Datei.',
+    disclaimer:'⚠️ Hinweis', disclaimerText:'Die Informationen wurden aus verschiedenen Quellen zusammengestellt. Vor Kaufentscheidungen solltest du aktuelle Informationen zusätzlich unabhängig prüfen.',
+    updates:'🔄 Updates', updatesText:'Neue Marken können durch Aktualisierung der data.json ergänzt werden. Die App kann über GitHub Pages veröffentlicht werden.'
+  }
+};
+
+const statusMap = {
+  boykot:{key:'boycott', icon:'🔴', cls:'boykot'},
+  dikkat:{key:'caution', icon:'🟠', cls:'dikkat'},
+  alternatif:{key:'alternative', icon:'🟢', cls:'alternatif'},
+  boykottaDegil:{key:'notBoycotted', icon:'✅', cls:'boykottaDegil'},
+  inceleniyor:{key:'review', icon:'⚪', cls:'inceleniyor'}
+};
+
+const el = id => document.getElementById(id);
+const search = el('search'), results = el('results'), stats = el('stats'), chips = el('chips');
+function tr(){ return T[state.lang] || T.tr; }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+function norm(s){ return String(s ?? '').toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); }
+function get(item,k){
+  const aliases = { anaFirma:['anaFirma','anafirma','ana_firma','Ana Firma'], marka:['marka','Marka','brand'], durum:['durum','status'], kategori:['kategori','category'], alternatif:['alternatif','alternative'], kaynak:['kaynak','source'], not:['not','note'], kod:['kod','code'] };
+  for(const a of aliases[k] || [k]) if(item[a] !== undefined && item[a] !== null && String(item[a]).trim() !== '') return item[a];
+  return '';
+}
+function statusOf(item){
+  const d = String(get(item,'durum') || '').trim();
+  if(statusMap[d]) return d;
+  const k = String(get(item,'kod')).toUpperCase();
+  if(k.startsWith('D')) return 'inceleniyor';
+  if(k.startsWith('C')) return 'alternatif';
+  if(k.startsWith('B')) return 'dikkat';
+  if(k === 'BD') return 'boykottaDegil';
+  return 'boykot';
+}
+function labelStatus(s){ const m=statusMap[s] || statusMap.inceleniyor; return `${m.icon} ${tr()[m.key]}`; }
+function sourceHref(src){ const s=String(src||'').trim(); return /^https?:\/\//i.test(s) ? s : ''; }
+function itemHay(item){ return norm([get(item,'marka'),get(item,'anaFirma'),get(item,'kategori'),get(item,'alternatif'),get(item,'not'),get(item,'kaynak'),get(item,'kod'),labelStatus(statusOf(item))].join(' ')); }
+function filteredData(){
+  const q = norm(state.q);
+  return state.data.filter(item => {
+    const st = statusOf(item);
+    const okFilter = state.filter === 'all' || st === state.filter;
+    const okQ = !q || itemHay(item).includes(q);
+    if(state.view === 'safe' && st !== 'boykottaDegil') return false;
+    return okFilter && okQ;
+  }).sort((a,b)=>String(get(a,'marka')).localeCompare(String(get(b,'marka')),'tr'));
+}
+function applyLang(){
+  document.documentElement.lang = state.lang;
+  document.querySelectorAll('[data-i18n]').forEach(n => { n.textContent = tr()[n.dataset.i18n] || n.textContent; });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(n => { n.placeholder = tr()[n.dataset.i18nPlaceholder] || n.placeholder; });
+  document.querySelectorAll('.lang').forEach(b => b.classList.toggle('active', b.dataset.lang === state.lang));
+}
+function renderStats(){
+  const counts = { all:state.data.length, boykot:0, dikkat:0, alternatif:0, boykottaDegil:0, inceleniyor:0 };
+  for(const it of state.data){ counts[statusOf(it)] = (counts[statusOf(it)]||0)+1; }
+  const cards = [
+    ['boykot','boycott','var(--danger)'], ['dikkat','caution','var(--warn)'], ['alternatif','alternative','var(--ok)'], ['boykottaDegil','notBoycotted','var(--safe)'], ['inceleniyor','review','var(--review)']
+  ];
+  stats.innerHTML = cards.map(([k,label,color])=>`<button class="stat" data-filter="${k}"><b>${counts[k]||0}</b><small><span class="dot" style="background:${color}"></span>${tr()[label]}</small></button>`).join('');
+}
+function renderChips(){
+  const arr = [['all','all'],['boykot','boycott'],['dikkat','caution'],['alternatif','alternative'],['boykottaDegil','notBoycotted'],['inceleniyor','review']];
+  chips.innerHTML = arr.map(([v,k])=>`<button class="chip ${state.filter===v?'active':''}" data-filter="${v}">${tr()[k]}</button>`).join('');
+}
+function card(item){
+  const s = statusOf(item), m = statusMap[s] || statusMap.inceleniyor;
+  const src = sourceHref(get(item,'kaynak'));
+  return `<article class="card ${m.cls}" data-brand="${encodeURIComponent(get(item,'marka'))}">
+    <div class="cardTop"><div><span class="status">${labelStatus(s)}</span><h2>${esc(get(item,'marka') || '-')}</h2></div><span class="code">${esc(get(item,'kod') || '-')}</span></div>
+    <div class="meta">
+      <div class="metaRow"><span>🏢 ${tr().parentCompany}</span><b>${esc(get(item,'anaFirma') || '-')}</b></div>
+      <div class="metaRow"><span>📂 ${tr().category}</span><b>${esc(get(item,'kategori') || '-')}</b></div>
+      <div class="metaRow"><span>✅ ${tr().alternatives}</span><b class="altText">${esc(get(item,'alternatif') || '-')}</b></div>
+      ${src ? `<div class="metaRow"><span>🌐 ${tr().source}</span><b>${esc(new URL(src).hostname.replace('www.',''))}</b></div>` : ''}
+    </div>
+  </article>`;
+}
+function renderHome(){
+  renderStats(); renderChips();
+  const list = filteredData();
+  results.innerHTML = list.length ? list.slice(0,400).map(card).join('') + (list.length>400 ? `<div class="empty">${tr().showing} 400 / ${list.length}</div>` : '') : `<div class="empty">${tr().noResults}</div>`;
+}
+function groupBy(field){
+  const map = new Map();
+  for(const item of state.data){
+    if(state.q && !itemHay(item).includes(norm(state.q))) continue;
+    const key = String(get(item,field) || '-').trim() || '-';
+    if(!map.has(key)) map.set(key, []);
+    map.get(key).push(item);
+  }
+  return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0],'tr'));
+}
+function renderGroups(kind){
+  stats.innerHTML=''; chips.innerHTML='';
+  const field = kind === 'companies' ? 'anaFirma' : 'kategori';
+  const title = kind === 'companies' ? tr().companies : tr().categories;
+  const groups = groupBy(field);
+  results.innerHTML = `<div class="aboutCard"><h2>${kind==='companies'?'🏢':'📂'} ${title}</h2><p>${groups.length} ${title.toLocaleLowerCase(state.lang)}</p></div>` + groups.map(([name,items])=>`<button class="group" data-group-field="${field}" data-group-value="${esc(name)}"><span><b>${esc(name)}</b><br><small>${items.length} ${tr().brandsCount}</small></span><strong>›</strong></button>`).join('');
+}
+function renderAbout(){
+  stats.innerHTML=''; chips.innerHTML='';
+  const total=state.data.length, safe=state.data.filter(x=>statusOf(x)==='boykottaDegil').length;
+  results.innerHTML = `<section class="aboutGrid">
+    <div class="aboutCard"><h2>${tr().aboutTitle}</h2><p>${tr().aboutIntro}</p><p><b>${total}</b> ${tr().brandsCount} • <b>${safe}</b> ${tr().notBoycotted}</p></div>
+    <div class="aboutCard"><h3>${tr().howSearch}</h3><p>${tr().howSearchText}</p></div>
+    <div class="aboutCard"><h3>${tr().sections}</h3><p>${tr().sectionsText}</p></div>
+    <div class="aboutCard"><h3>${tr().updates}</h3><p>${tr().updatesText}</p></div>
+    <div class="aboutCard"><h3>${tr().disclaimer}</h3><p>${tr().disclaimerText}</p></div>
+    <div class="aboutCard"><h3>Boykot Rehberi v3.0</h3><ul><li>TR / EN / DE</li><li>PWA</li><li>GitHub Pages</li></ul></div>
+  </section>`;
+}
+function render(){
+  applyLang();
+  document.body.dataset.theme = state.theme;
+  document.querySelectorAll('.bottomNav button').forEach(b=>b.classList.toggle('active', b.dataset.view === state.view));
+  if(state.view === 'home') return renderHome();
+  if(state.view === 'safe') { state.filter='boykottaDegil'; return renderHome(); }
+  if(state.view === 'companies') return renderGroups('companies');
+  if(state.view === 'categories') return renderGroups('categories');
+  if(state.view === 'about') return renderAbout();
+}
+async function init(){
+  try{
+    const res = await fetch('data.json?v=3.0.1', {cache:'no-store'});
+    if(!res.ok) throw new Error('data.json');
+    state.data = await res.json();
+    render();
+  }catch(e){
+    results.innerHTML = `<div class="empty">data.json yüklenemedi. Dosyalar aynı klasörde olmalı.</div>`;
+  }
+}
+search.addEventListener('input', e => { state.q = e.target.value; if(state.view==='about') state.view='home'; render(); });
+el('clearBtn').addEventListener('click', ()=>{ search.value=''; state.q=''; render(); search.focus(); });
+document.querySelectorAll('.bottomNav button').forEach(btn=>btn.addEventListener('click',()=>{ state.view=btn.dataset.view; state.filter='all'; render(); window.scrollTo({top:0,behavior:'smooth'}); }));
+document.querySelectorAll('.lang').forEach(btn=>btn.addEventListener('click',()=>{ state.lang=btn.dataset.lang; localStorage.setItem('lang',state.lang); render(); }));
+el('themeBtn').addEventListener('click',()=>{ state.theme=state.theme==='dark'?'light':'dark'; localStorage.setItem('theme',state.theme); el('themeBtn').textContent=state.theme==='dark'?'☀️':'🌙'; render(); });
+document.addEventListener('click', e=>{
+  const f = e.target.closest('[data-filter]');
+  if(f){ state.filter=f.dataset.filter; state.view='home'; render(); return; }
+  const g = e.target.closest('[data-group-field]');
+  if(g){ state.view='home'; state.filter='all'; search.value=g.dataset.groupValue; state.q=g.dataset.groupValue; render(); return; }
+  const c = e.target.closest('[data-brand]');
+  if(c){ const name=decodeURIComponent(c.dataset.brand); const item=state.data.find(x=>String(get(x,'marka'))===name); if(item) showDetail(item); }
+});
+function showDetail(item){
+  const s=statusOf(item), src=sourceHref(get(item,'kaynak'));
+  el('detailContent').innerHTML = `<span class="status">${labelStatus(s)}</span><h2 class="detailTitle">${esc(get(item,'marka'))}</h2>
+    <div class="meta">
+      <div class="metaRow"><span>🏢 ${tr().parentCompany}</span><b>${esc(get(item,'anaFirma')||'-')}</b></div>
+      <div class="metaRow"><span>📂 ${tr().category}</span><b>${esc(get(item,'kategori')||'-')}</b></div>
+      <div class="metaRow"><span>🏷️ ${tr().code}</span><b>${esc(get(item,'kod')||'-')}</b></div>
+      <div class="metaRow"><span>✅ ${tr().alternatives}</span><b class="altText">${esc(get(item,'alternatif')||'-')}</b></div>
+      <div class="metaRow"><span>📝 ${tr().note}</span><b>${esc(get(item,'not')||'-')}</b></div>
+    </div>${src ? `<a class="sourceLink" href="${esc(src)}" target="_blank" rel="noopener">🌐 ${tr().openSource}</a>` : ''}`;
+  el('detailDialog').showModal();
+}
+el('closeDialog').addEventListener('click',()=>el('detailDialog').close());
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+init();

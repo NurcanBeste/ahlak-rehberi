@@ -1,12 +1,18 @@
-# Boykot Rehberi V2
+# Boykot Rehberi v3.0
 
-Bu paket GitHub Pages için hazırlandı.
+Çok dilli PWA sürümü.
 
-## İçerik
-- `data.json`: 1571 toplam kayıt
-- Ana boykot listesi: 1362 kayıt
-- `alternatif.ods` içinden eklenen Boykotta Değil markaları: 209 kayıt
-- Tekrar olduğu için eklenmeyen alternatif kayıtları: 9 kayıt
+## Dosyalar
 
-## Yükleme
-ZIP içindeki dosyaları GitHub reposunun ana klasörüne yükleyin. ZIP dosyasını değil, içindeki dosyaları yükleyin.
+- index.html
+- app.js
+- style.css
+- data.json
+- manifest.json
+- sw.js
+- icon-192.png
+- icon-512.png
+
+## GitHub Pages
+
+Bu dosyaları repository ana dizinine yükleyin. Settings > Pages bölümünden main branch ve root klasörünü seçin.
