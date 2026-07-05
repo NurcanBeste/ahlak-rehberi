@@ -2,55 +2,55 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#6f7f3f" />
-  <title>Boykot Rehberi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#5f6f3a" />
+  <title>Boykot Rehberi V3</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="appShell">
+  <div id="app" class="app-shell">
     <header class="hero">
-      <div class="topLine">
-        <div class="brandMark">BR</div>
+      <div class="topbar">
+        <div class="brandmark">BR</div>
         <div>
-          <h1 id="appTitle">Boykot Rehberi</h1>
-          <p id="appSubtitle">Marka, ana firma ve alternatif arama</p>
+          <h1 data-i18n="appTitle">Boykot Rehberi</h1>
+          <p data-i18n="tagline">Marka, ana firma ve alternatif arama</p>
         </div>
-        <button id="themeBtn" class="iconBtn" aria-label="Tema">🌙</button>
+        <button id="themeBtn" class="icon-btn" type="button" aria-label="Tema">🌙</button>
       </div>
 
-      <div class="langBar" aria-label="Language">
-        <button data-lang="tr" class="langBtn active">🇹🇷 TR</button>
-        <button data-lang="en" class="langBtn">🇬🇧 EN</button>
-        <button data-lang="de" class="langBtn">🇩🇪 DE</button>
+      <div class="lang-row" aria-label="Dil seçimi">
+        <button data-lang="tr" class="lang active" type="button">🇹🇷 TR</button>
+        <button data-lang="en" class="lang" type="button">🇬🇧 EN</button>
+        <button data-lang="de" class="lang" type="button">🇩🇪 DE</button>
       </div>
 
-      <label class="searchBox">
+      <label class="searchbox">
         <span>🔍</span>
-        <input id="search" autocomplete="off" placeholder="Marka ara..." />
-        <button id="clearBtn" class="clearBtn" aria-label="Temizle">×</button>
+        <input id="search" type="search" autocomplete="off" data-i18n-placeholder="searchPlaceholder" placeholder="Marka ara..." />
+        <button id="clearBtn" type="button" aria-label="Temizle">×</button>
       </label>
     </header>
 
     <main>
       <section id="stats" class="stats"></section>
       <section id="chips" class="chips"></section>
-      <section id="results" class="results"></section>
+      <section id="results" class="results" aria-live="polite"></section>
     </main>
+
+    <nav class="bottom-nav" aria-label="Alt menü">
+      <button data-view="home" class="nav-active" type="button"><span>🏠</span><b data-i18n="home">Ana Sayfa</b></button>
+      <button data-view="companies" type="button"><span>🏢</span><b data-i18n="companies">Ana Firmalar</b></button>
+      <button data-view="categories" type="button"><span>📂</span><b data-i18n="categories">Kategoriler</b></button>
+      <button data-view="notBoycotted" type="button"><span>✅</span><b data-i18n="notBoycotted">Boykotta Değil</b></button>
+      <button data-view="about" type="button"><span>ℹ️</span><b data-i18n="about">Hakkında</b></button>
+    </nav>
   </div>
 
-  <nav class="bottomNav" aria-label="Navigation">
-    <button data-view="home" class="navActive"><span>🏠</span><b data-i18n="navHome">Ana Sayfa</b></button>
-    <button data-view="companies"><span>🏢</span><b data-i18n="navCompanies">Ana Firmalar</b></button>
-    <button data-view="categories"><span>📂</span><b data-i18n="navCategories">Kategoriler</b></button>
-    <button data-view="notBoycotted"><span>✅</span><b data-i18n="navNotBoycotted">Boykotta Değil</b></button>
-    <button data-view="about"><span>ℹ️</span><b data-i18n="navAbout">Hakkında</b></button>
-  </nav>
-
-  <dialog id="detailDialog">
+  <dialog id="detailDialog" class="detail-dialog">
     <div id="detailContent"></div>
-    <button id="closeDialog" class="primaryBtn">Kapat</button>
+    <button id="closeDialog" class="close-dialog" type="button" data-i18n="close">Kapat</button>
   </dialog>
 
   <script src="app.js"></script>

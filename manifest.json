@@ -1,20 +1,12 @@
 {
-  "name": "Boykot Rehberi",
+  "name": "Boykot Rehberi V3",
   "short_name": "Boykot",
-  "start_url": "./",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#fbf7ec",
-  "theme_color": "#6f7f3f",
+  "background_color": "#f6f3e8",
+  "theme_color": "#5f6f3a",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }

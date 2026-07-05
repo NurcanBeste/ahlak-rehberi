@@ -1,22 +1,15 @@
-# Boykot Rehberi V3.1
+# Boykot Rehberi V3 Clean
 
-Bu paket gerçekten `/mnt/data/data(3).json` ve `/mnt/data/alternatif.ods` kullanılarak oluşturuldu.
+Temiz sıfırdan hazırlanmış PWA sürümü.
 
 ## İçerik
-- Ana liste: 1362 kayıt
-- alternatif.ods toplam marka hücresi: 218
-- Zaten ana listede olduğu için eklenmeyen: 9
-- Boykotta Değil olarak eklenen: 209
-- Toplam data.json kaydı: 1571
-
-## Özellikler
-- Türkçe / English / Deutsch arayüz
+- 1362 ana kayıt
+- alternatif.ods içinden eklenen 207 “Boykotta Değil” kayıt
+- Toplam 1569 kayıt
+- `anaFirma` alanı korunur
+- Türkçe / İngilizce / Almanca arayüz
 - Zeytin yeşili tema
-- Koyu/açık tema
-- Boykot, İnceleniyor, Boykotta Değil filtreleri
-- Ana Firmalar ve Kategoriler sayfaları
-- Hakkında sayfası
-- GitHub Pages uyumlu PWA
+- GitHub Pages uyumlu
 
 ## Yükleme
-ZIP içindeki dosyaları GitHub repo kök dizinine yükleyin.
+ZIP içindeki dosyaları GitHub reposunun kök dizinine yükleyin. ZIP dosyasını değil, içindeki dosyaları yükleyin.

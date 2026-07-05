@@ -1,302 +1,215 @@
+'use strict';
+
 let DATA = [];
-let view = "home";
-let filter = "all";
-let lang = localStorage.getItem("boykot_lang") || "tr";
-let theme = localStorage.getItem("boykot_theme") || "light";
+let view = 'home';
+let filter = 'all';
+let lang = localStorage.getItem('boykot_lang') || 'tr';
+let theme = localStorage.getItem('boykot_theme') || 'light';
+let selectedTitle = '';
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => [...document.querySelectorAll(sel)];
 
 const T = {
   tr: {
-    title:"Boykot Rehberi", subtitle:"Marka, ana firma ve alternatif arama", search:"Marka, ana firma, kategori veya alternatif ara...",
-    navHome:"Ana Sayfa", navCompanies:"Ana Firmalar", navCategories:"Kategoriler", navNotBoycotted:"Boykotta Değil", navAbout:"Hakkında",
-    all:"Tümü", boycott:"Boykot", caution:"Dikkat", alternative:"Alternatif", notBoycotted:"Boykotta Değil", review:"İnceleniyor",
-    parent:"Ana Firma", category:"Kategori", alternatives:"Alternatifler", note:"Not", source:"Kaynak", code:"Kod", brand:"Marka",
-    details:"Ayrıntıları Gör", close:"Kapat", open:"Kaynağı Aç", brands:"marka", noResults:"Sonuç bulunamadı.",
-    total:"Toplam", withAlt:"Alternatifli", aboutTitle:"📖 Boykot Rehberi", aboutSub:"Bu uygulama markalar, ana firmalar ve alternatifler hakkında hızlı bilgi sunmak için hazırlanmıştır.",
-    useTitle:"🔍 Nasıl Kullanılır?", useText:"Arama kutusuna marka, ana firma, kategori, alternatif veya not yazarak arama yapabilirsiniz.",
-    compTitle:"🏢 Ana Firmalar", compText:"Aynı ana firmaya bağlı markaları birlikte görmek için Ana Firmalar bölümünü kullanın.",
-    catTitle:"📂 Kategoriler", catText:"Ürün gruplarına göre markaları hızlıca inceleyebilirsiniz.",
-    nbTitle:"✅ Boykotta Değil", nbText:"Bu bölüm alternatif.ods dosyasından eklenen ve boykot listesinde olmayan markaları gösterir.",
-    disclaimerTitle:"⚠️ Bilgilendirme", disclaimerText:"Bu liste bilgilendirme amaçlıdır. Bilgiler farklı kaynaklardan derlenmiştir; satın alma kararından önce güncel kaynaklardan kontrol etmeniz önerilir.",
-    version:"Sürüm 3.1 • TR / EN / DE"
+    appTitle: 'Boykot Rehberi', tagline: 'Marka, ana firma ve alternatif arama', searchPlaceholder: 'Marka, ana firma, kategori veya alternatif ara...',
+    home: 'Ana Sayfa', companies: 'Ana Firmalar', categories: 'Kategoriler', alternatives: 'Alternatifler', notBoycotted: 'Boykotta Değil', about: 'Hakkında', close: 'Kapat',
+    all: 'Tümü', boycott: 'Boykot', caution: 'Dikkat', alternative: 'Alternatif', notBoycottedStatus: 'Boykotta Değil', review: 'İnceleniyor',
+    brand: 'Marka', parent: 'Ana Firma', category: 'Kategori', code: 'Kod', alt: 'Alternatif', note: 'Not', source: 'Kaynak', details: 'Ayrıntıları Gör', openSource: 'Kaynağı Aç',
+    noResults: 'Sonuç bulunamadı.', brands: 'marka', countWithAlternatives: 'Alternatifli', total: 'Toplam',
+    aboutTitle: '📖 Kullanım Bilgisi', aboutIntro: 'Bu uygulama, markalar hakkında hızlı bilgi edinmenize ve alternatif ürünleri kolayca bulmanıza yardımcı olmak için hazırlanmıştır.',
+    howSearch: '🔍 Nasıl aranır?', howSearchText: 'Arama kutusuna marka, ana firma, kategori, alternatif veya not yazarak sonuçları filtreleyebilirsiniz.',
+    parentText: '🏢 Ana firmalar', parentDesc: 'Aynı şirkete ait markaları tek ekranda görebilirsiniz.',
+    categoryText: '📂 Kategoriler', categoryDesc: 'Ürün gruplarına göre listeleme yapabilirsiniz.',
+    disclaimer: '⚠️ Bilgilendirme', disclaimerText: 'Bu uygulama bilgilendirme amacıyla hazırlanmıştır. Satın alma kararı vermeden önce güncel bilgileri bağımsız kaynaklardan da doğrulamanız tavsiye edilir.',
+    version: 'Sürüm 3.0 — TR / EN / DE'
   },
   en: {
-    title:"Boycott Guide", subtitle:"Search brands, parent companies and alternatives", search:"Search brand, parent company, category or alternative...",
-    navHome:"Home", navCompanies:"Parent Companies", navCategories:"Categories", navNotBoycotted:"Not Boycotted", navAbout:"About",
-    all:"All", boycott:"Boycott", caution:"Caution", alternative:"Alternative", notBoycotted:"Not Boycotted", review:"Under Review",
-    parent:"Parent Company", category:"Category", alternatives:"Alternatives", note:"Note", source:"Source", code:"Code", brand:"Brand",
-    details:"View Details", close:"Close", open:"Open Source", brands:"brands", noResults:"No results found.",
-    total:"Total", withAlt:"With alternatives", aboutTitle:"📖 Boycott Guide", aboutSub:"This app helps you quickly search brands, parent companies and alternative options.",
-    useTitle:"🔍 How to Use", useText:"Use the search box to look up a brand, parent company, category, alternative or note.",
-    compTitle:"🏢 Parent Companies", compText:"Use the Parent Companies section to see brands grouped under the same company.",
-    catTitle:"📂 Categories", catText:"Browse brands by product categories.",
-    nbTitle:"✅ Not Boycotted", nbText:"This section shows brands added from the alternative.ods file that are not in the boycott list.",
-    disclaimerTitle:"⚠️ Disclaimer", disclaimerText:"This list is for informational purposes only. Information is compiled from different sources; please verify current details before making purchasing decisions.",
-    version:"Version 3.1 • TR / EN / DE"
+    appTitle: 'Boycott Guide', tagline: 'Search brands, parent companies and alternatives', searchPlaceholder: 'Search brand, parent company, category or alternative...',
+    home: 'Home', companies: 'Parent Companies', categories: 'Categories', alternatives: 'Alternatives', notBoycotted: 'Not Boycotted', about: 'About', close: 'Close',
+    all: 'All', boycott: 'Boycott', caution: 'Caution', alternative: 'Alternative', notBoycottedStatus: 'Not Boycotted', review: 'Under Review',
+    brand: 'Brand', parent: 'Parent Company', category: 'Category', code: 'Code', alt: 'Alternatives', note: 'Note', source: 'Source', details: 'View Details', openSource: 'Open Source',
+    noResults: 'No results found.', brands: 'brands', countWithAlternatives: 'With alternatives', total: 'Total',
+    aboutTitle: '📖 How to Use', aboutIntro: 'This app helps you quickly look up brands, parent companies and possible alternatives.',
+    howSearch: '🔍 Search', howSearchText: 'Type a brand, parent company, category, alternative or note to filter the list.',
+    parentText: '🏢 Parent companies', parentDesc: 'See all brands that belong to the same company in one place.',
+    categoryText: '📂 Categories', categoryDesc: 'Browse brands by product category.',
+    disclaimer: '⚠️ Disclaimer', disclaimerText: 'This app is for informational purposes. Please verify important information from independent, up-to-date sources before making purchasing decisions.',
+    version: 'Version 3.0 — TR / EN / DE'
   },
   de: {
-    title:"Boykott-Ratgeber", subtitle:"Marken, Mutterfirmen und Alternativen suchen", search:"Marke, Mutterfirma, Kategorie oder Alternative suchen...",
-    navHome:"Start", navCompanies:"Mutterfirmen", navCategories:"Kategorien", navNotBoycotted:"Nicht boykottiert", navAbout:"Info",
-    all:"Alle", boycott:"Boykott", caution:"Achtung", alternative:"Alternative", notBoycotted:"Nicht boykottiert", review:"In Prüfung",
-    parent:"Mutterfirma", category:"Kategorie", alternatives:"Alternativen", note:"Notiz", source:"Quelle", code:"Code", brand:"Marke",
-    details:"Details anzeigen", close:"Schließen", open:"Quelle öffnen", brands:"Marken", noResults:"Keine Ergebnisse gefunden.",
-    total:"Gesamt", withAlt:"Mit Alternativen", aboutTitle:"📖 Boykott-Ratgeber", aboutSub:"Diese App hilft, Marken, Mutterfirmen und Alternativen schnell zu finden.",
-    useTitle:"🔍 Nutzung", useText:"Suche nach Marke, Mutterfirma, Kategorie, Alternative oder Notiz.",
-    compTitle:"🏢 Mutterfirmen", compText:"Im Bereich Mutterfirmen sehen Sie Marken, die zur gleichen Firma gehören.",
-    catTitle:"📂 Kategorien", catText:"Durchsuchen Sie Marken nach Produktgruppen.",
-    nbTitle:"✅ Nicht boykottiert", nbText:"Dieser Bereich zeigt Marken aus der Datei alternative.ods, die nicht in der Boykottliste enthalten sind.",
-    disclaimerTitle:"⚠️ Hinweis", disclaimerText:"Diese Liste dient nur zur Information. Die Daten stammen aus verschiedenen Quellen; bitte prüfen Sie aktuelle Angaben vor Kaufentscheidungen.",
-    version:"Version 3.1 • TR / EN / DE"
+    appTitle: 'Boykott-Ratgeber', tagline: 'Marken, Mutterfirmen und Alternativen suchen', searchPlaceholder: 'Marke, Mutterfirma, Kategorie oder Alternative suchen...',
+    home: 'Start', companies: 'Mutterfirmen', categories: 'Kategorien', alternatives: 'Alternativen', notBoycotted: 'Nicht boykottiert', about: 'Info', close: 'Schließen',
+    all: 'Alle', boycott: 'Boykott', caution: 'Achtung', alternative: 'Alternative', notBoycottedStatus: 'Nicht boykottiert', review: 'In Prüfung',
+    brand: 'Marke', parent: 'Mutterfirma', category: 'Kategorie', code: 'Code', alt: 'Alternativen', note: 'Notiz', source: 'Quelle', details: 'Details ansehen', openSource: 'Quelle öffnen',
+    noResults: 'Keine Ergebnisse gefunden.', brands: 'Marken', countWithAlternatives: 'Mit Alternativen', total: 'Gesamt',
+    aboutTitle: '📖 Nutzungshinweise', aboutIntro: 'Diese App hilft dabei, Marken, Mutterfirmen und mögliche Alternativen schnell zu finden.',
+    howSearch: '🔍 Suche', howSearchText: 'Geben Sie Marke, Mutterfirma, Kategorie, Alternative oder Notiz ein, um die Liste zu filtern.',
+    parentText: '🏢 Mutterfirmen', parentDesc: 'Sehen Sie alle Marken derselben Firma an einem Ort.',
+    categoryText: '📂 Kategorien', categoryDesc: 'Durchsuchen Sie Marken nach Produktkategorien.',
+    disclaimer: '⚠️ Hinweis', disclaimerText: 'Diese App dient nur zur Information. Bitte prüfen Sie wichtige Informationen zusätzlich über aktuelle, unabhängige Quellen.',
+    version: 'Version 3.0 — TR / EN / DE'
   }
 };
 
-const labels = {
-  boykot:{emoji:"🔴", key:"boycott"},
-  dikkat:{emoji:"🟠", key:"caution"},
-  alternatif:{emoji:"🟢", key:"alternative"},
-  boykottaDegil:{emoji:"✅", key:"notBoycotted"},
-  inceleniyor:{emoji:"⚪", key:"review"}
+const statusMap = {
+  boykot: { icon:'🔴', key:'boycott', cls:'boykot' },
+  dikkat: { icon:'🟠', key:'caution', cls:'dikkat' },
+  alternatif: { icon:'🟢', key:'alternative', cls:'alternatif' },
+  boykottaDegil: { icon:'✅', key:'notBoycottedStatus', cls:'boykottaDegil' },
+  inceleniyor: { icon:'⚪', key:'review', cls:'inceleniyor' }
 };
-
-const search = document.getElementById("search");
-const results = document.getElementById("results");
-const stats = document.getElementById("stats");
-const chips = document.getElementById("chips");
 
 function tr(){ return T[lang] || T.tr; }
-function esc(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
-function norm(s){ return String(s || "").toLocaleLowerCase("tr-TR").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim(); }
-function get(item, key){
-  if(!item) return "";
-  if(key === "anaFirma") return item.anaFirma || item.anafirma || item.ana_firma || "";
-  return item[key] || "";
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+function norm(s){ return String(s ?? '').toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i'); }
+function getStatus(item){
+  const raw = item.durum || 'boykot';
+  if (statusMap[raw]) return raw;
+  const n = norm(raw).replace(/\s+/g,'');
+  if (n.includes('degil') || n.includes('notboy')) return 'boykottaDegil';
+  if (n.includes('alternatif')) return 'alternatif';
+  if (n.includes('dikkat') || n.includes('caution')) return 'dikkat';
+  if (n.includes('ince') || n.includes('review')) return 'inceleniyor';
+  return 'boykot';
 }
-function statusText(status){
-  const l = labels[status] || labels.inceleniyor;
-  return `${l.emoji} ${tr()[l.key]}`;
-}
-function normalizedItem(item){
-  let status = item.durum || "boykot";
-  if(!labels[status]) status = "inceleniyor";
-  return {
-    marka: get(item,"marka") || "—",
-    anaFirma: get(item,"anaFirma") || "—",
-    durum: status,
-    kod: get(item,"kod") || "",
-    kategori: get(item,"kategori") || "",
-    alternatif: get(item,"alternatif") || "",
-    kaynak: get(item,"kaynak") || "",
-    not: get(item,"not") || ""
-  };
-}
+function parentOf(item){ return item.anaFirma || item.anafirma || ''; }
+function altArray(item){ return String(item.alternatif || '').split(/[;,•]+/).map(x=>x.trim()).filter(Boolean).slice(0,6); }
+function haystack(item){ return norm([item.marka,parentOf(item),item.kategori,item.alternatif,item.kaynak,item.not,item.kod,getStatus(item)].join(' ')); }
 
 async function init(){
-  document.documentElement.dataset.theme = theme === "dark" ? "dark" : "light";
-  try{
-    const res = await fetch("data.json?v=3.1", {cache:"no-store"});
-    if(!res.ok) throw new Error("data.json");
-    const json = await res.json();
-    DATA = Array.isArray(json) ? json.map(normalizedItem) : [];
-  }catch(e){
-    results.innerHTML = `<div class="empty">data.json yüklenemedi. Dosyaların aynı klasörde olduğundan emin ol.</div>`;
-    return;
-  }
-  bind();
+  document.documentElement.dataset.theme = theme;
   applyLang();
-  render();
-}
-
-function bind(){
-  search.addEventListener("input", () => { view="home"; setNav("home"); render(); });
-  document.getElementById("clearBtn").addEventListener("click", () => { search.value=""; render(); search.focus(); });
-  document.querySelectorAll(".bottomNav button").forEach(btn => btn.addEventListener("click", () => {
-    view = btn.dataset.view;
-    filter = view === "notBoycotted" ? "boykottaDegil" : "all";
-    search.value = "";
-    setNav(view);
+  try{
+    const res = await fetch('data.json?v=3-clean-20260705', { cache:'no-store' });
+    if(!res.ok) throw new Error('data.json yüklenemedi');
+    const json = await res.json();
+    DATA = Array.isArray(json) ? json.filter(x=>x && x.marka) : [];
     render();
-  }));
-  document.querySelectorAll(".langBtn").forEach(btn => btn.addEventListener("click", () => {
-    lang = btn.dataset.lang;
-    localStorage.setItem("boykot_lang", lang);
-    applyLang();
-    render();
-  }));
-  document.getElementById("themeBtn").addEventListener("click", () => {
-    theme = theme === "dark" ? "light" : "dark";
-    localStorage.setItem("boykot_theme", theme);
-    document.documentElement.dataset.theme = theme === "dark" ? "dark" : "light";
-    document.getElementById("themeBtn").textContent = theme === "dark" ? "☀️" : "🌙";
-  });
-  results.addEventListener("click", e => {
-    const more = e.target.closest("[data-detail]");
-    if(more){ showDetail(DATA[Number(more.dataset.detail)]); return; }
-    const group = e.target.closest("[data-group]");
-    if(group){
-      search.value = group.dataset.group;
-      view = "home"; filter = "all"; setNav("home"); render();
-    }
-  });
-  document.getElementById("closeDialog").addEventListener("click", () => document.getElementById("detailDialog").close());
+  }catch(err){
+    $('#results').innerHTML = `<div class="empty"><b>Hata</b><br>${esc(err.message)}</div>`;
+  }
 }
 
 function applyLang(){
-  const tt = tr();
-  document.documentElement.lang = lang;
-  document.getElementById("appTitle").textContent = tt.title;
-  document.getElementById("appSubtitle").textContent = tt.subtitle;
-  search.placeholder = tt.search;
-  document.getElementById("closeDialog").textContent = tt.close;
-  document.getElementById("themeBtn").textContent = theme === "dark" ? "☀️" : "🌙";
-  document.querySelectorAll("[data-i18n]").forEach(el => {
-    const key = el.dataset.i18n;
-    if(tt[key]) el.textContent = tt[key];
-  });
-  document.querySelectorAll(".langBtn").forEach(btn => btn.classList.toggle("active", btn.dataset.lang === lang));
-}
-
-function setNav(v){
-  document.querySelectorAll(".bottomNav button").forEach(b => b.classList.toggle("navActive", b.dataset.view === v));
-}
-
-function counts(){
-  return {
-    total: DATA.length,
-    boykot: DATA.filter(x=>x.durum==="boykot").length,
-    dikkat: DATA.filter(x=>x.durum==="dikkat").length,
-    alternatif: DATA.filter(x=>x.durum==="alternatif").length,
-    boykottaDegil: DATA.filter(x=>x.durum==="boykottaDegil").length,
-    inceleniyor: DATA.filter(x=>x.durum==="inceleniyor").length,
-    withAlt: DATA.filter(x=>String(x.alternatif || "").trim()).length
-  };
+  $$('[data-i18n]').forEach(el => el.textContent = tr()[el.dataset.i18n] || el.textContent);
+  $$('[data-i18n-placeholder]').forEach(el => el.placeholder = tr()[el.dataset.i18nPlaceholder] || el.placeholder);
+  $$('.lang').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
+  $('#themeBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
 }
 
 function renderStats(){
-  const c = counts(), tt = tr();
-  const items = [
-    [tt.total,c.total,"📦"],
-    [tt.boycott,c.boykot,"🔴"],
-    [tt.notBoycotted,c.boykottaDegil,"✅"],
-    [tt.review,c.inceleniyor,"⚪"],
-    [tt.withAlt,c.withAlt,"🟢"]
+  const counts = { boykot:0, dikkat:0, alternatif:0, boykottaDegil:0, inceleniyor:0 };
+  DATA.forEach(item => counts[getStatus(item)]++);
+  const withAlt = DATA.filter(x => String(x.alternatif || '').trim()).length;
+  const blocks = [
+    ['📦', tr().total, DATA.length], ['🔴', tr().boycott, counts.boykot], ['🟢', tr().alternative, counts.alternatif], ['✅', tr().notBoycotted, counts.boykottaDegil], ['⭐', tr().countWithAlternatives, withAlt]
   ];
-  stats.innerHTML = items.map(([label,val,emoji]) => `<div class="stat"><b>${emoji} ${val}</b><span>${esc(label)}</span></div>`).join("");
+  $('#stats').innerHTML = blocks.map(([i,l,n]) => `<div class="stat"><b>${i} ${n}</b><small>${esc(l)}</small></div>`).join('');
 }
 
 function renderChips(){
-  const tt=tr();
-  const defs = [
-    ["all", tt.all],
-    ["boykot", "🔴 " + tt.boycott],
-    ["boykottaDegil", "✅ " + tt.notBoycotted],
-    ["inceleniyor", "⚪ " + tt.review]
-  ];
-  chips.innerHTML = defs.map(([f,label]) => `<button class="chip ${filter===f?'active':''}" data-filter="${f}">${esc(label)}</button>`).join("");
-  chips.querySelectorAll("[data-filter]").forEach(btn => btn.addEventListener("click", () => {
-    filter = btn.dataset.filter;
-    view = "home"; setNav("home"); render();
-  }));
+  const chips = [['all',tr().all],['boykot','🔴 '+tr().boycott],['dikkat','🟠 '+tr().caution],['alternatif','🟢 '+tr().alternative],['boykottaDegil','✅ '+tr().notBoycotted],['inceleniyor','⚪ '+tr().review]];
+  $('#chips').innerHTML = chips.map(([key,label]) => `<button class="chip ${filter===key?'active':''}" data-filter="${key}" type="button">${esc(label)}</button>`).join('');
 }
 
-function currentList(){
-  const q = norm(search.value);
-  return DATA.map((x,i)=>({x,i})).filter(({x}) => {
-    const hay = norm([x.marka,x.anaFirma,x.kategori,x.alternatif,x.not,x.kod,x.kaynak].join(" "));
-    const okQ = !q || hay.includes(q);
-    const okF = filter === "all" || x.durum === filter;
-    return okQ && okF;
-  }).sort((a,b) => a.x.marka.localeCompare(b.x.marka, "tr"));
+function listForHome(){
+  const q = norm($('#search').value.trim());
+  let list = DATA.filter(item => (!q || haystack(item).includes(q)) && (filter === 'all' || getStatus(item) === filter));
+  if (view === 'notBoycotted') list = list.filter(item => getStatus(item) === 'boykottaDegil');
+  return list.sort((a,b) => String(a.marka).localeCompare(String(b.marka),'tr'));
+}
+
+function renderCards(list){
+  if(!list.length) return `<div class="empty">${esc(tr().noResults)}</div>`;
+  return list.slice(0,400).map(card).join('');
+}
+function card(item){
+  const st = statusMap[getStatus(item)];
+  const alts = altArray(item);
+  return `<article class="card ${st.cls}" data-brand="${encodeURIComponent(item.marka)}">
+    <div class="card-top"><div><div class="status">${st.icon} ${esc(tr()[st.key])}</div><h2>${esc(item.marka)}</h2></div><div class="code">${esc(item.kod || '-')}</div></div>
+    <div class="meta">
+      <div class="row"><span>${esc(tr().parent)}</span><b>${esc(parentOf(item) || '-')}</b></div>
+      <div class="row"><span>${esc(tr().category)}</span><b>${esc(item.kategori || '-')}</b></div>
+      <div class="row"><span>${esc(tr().alt)}</span><b class="alt-list">${alts.length ? alts.map(a=>`<em class="tag">${esc(a)}</em>`).join('') : '-'}</b></div>
+    </div>
+    <button class="open" type="button">${esc(tr().details)} →</button>
+  </article>`;
 }
 
 function renderHome(){
   renderStats(); renderChips();
-  const list = currentList();
-  if(!list.length){ results.className="results"; results.innerHTML = `<div class="empty">${tr().noResults}</div>`; return; }
-  results.className = "results";
-  results.innerHTML = list.slice(0,300).map(({x,i}) => card(x,i)).join("");
+  $('#results').innerHTML = renderCards(listForHome());
 }
-
-function card(x,i){
-  const tt=tr();
-  const alt = x.alternatif ? `<div class="altBox"><small>${esc(tt.alternatives)}</small>${esc(x.alternatif)}</div>` : "";
-  return `<article class="card ${esc(x.durum)}">
-    <div class="cardTop">
-      <div class="status">${statusText(x.durum)}</div>
-      <div class="code">${esc(x.kod || "—")}</div>
-    </div>
-    <h2>${esc(x.marka)}</h2>
-    <div class="meta">
-      <span>🏢 ${esc(tt.parent)}</span><b>${esc(x.anaFirma || "—")}</b>
-      <span>📂 ${esc(tt.category)}</span><b>${esc(x.kategori || "—")}</b>
-    </div>
-    ${alt}
-    <button class="moreBtn" data-detail="${i}">${esc(tt.details)} →</button>
-  </article>`;
-}
-
 function groupBy(field){
   const map = new Map();
-  DATA.forEach(x => {
-    const key = field === "anaFirma" ? (x.anaFirma || "—") : (x[field] || "—");
+  DATA.forEach(item => {
+    const key = field === 'company' ? (parentOf(item) || '-') : (item.kategori || '-');
     if(!map.has(key)) map.set(key, []);
-    map.get(key).push(x);
+    map.get(key).push(item);
   });
-  return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0],"tr"));
+  return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0],'tr'));
 }
-
 function renderGroups(field){
-  renderStats(); chips.innerHTML = "";
-  const groups = groupBy(field);
-  results.className = "results";
-  results.innerHTML = groups.map(([name,items]) => `
-    <article class="groupCard" data-group="${esc(name)}">
-      <div><h3>${esc(name)}</h3><p>${items.length} ${esc(tr().brands)}</p></div>
-      <div class="arrow">›</div>
-    </article>`).join("");
+  renderStats(); $('#chips').innerHTML = '';
+  const icon = field === 'company' ? '🏢' : '📂';
+  const title = field === 'company' ? tr().companies : tr().categories;
+  $('#results').innerHTML = `<div class="empty"><b>${esc(title)}</b></div>` + groupBy(field).map(([name,items]) =>
+    `<div class="group" data-group-field="${field}" data-group="${encodeURIComponent(name)}"><div class="group-icon">${icon}</div><div><b>${esc(name)}</b><small>${items.length} ${esc(tr().brands)}</small></div><span>›</span></div>`
+  ).join('');
 }
-
+function renderGroupList(field, value){
+  renderStats(); $('#chips').innerHTML = `<button class="chip active" data-back="${field}" type="button">← ${esc(field==='company'?tr().companies:tr().categories)}</button>`;
+  const list = DATA.filter(item => (field === 'company' ? parentOf(item) : item.kategori || '-') === value);
+  $('#results').innerHTML = `<div class="empty"><b>${esc(value)}</b><br>${list.length} ${esc(tr().brands)}</div>` + renderCards(list);
+}
 function renderAbout(){
-  stats.innerHTML = ""; chips.innerHTML = "";
-  const tt=tr();
-  results.className = "results";
-  results.innerHTML = `
-    <section class="aboutHero">
-      <h2>${esc(tt.aboutTitle)}</h2>
-      <p>${esc(tt.aboutSub)}</p>
-      <p><b>${esc(tt.version)}</b></p>
-    </section>
-    <section class="aboutGrid">
-      <article class="aboutCard"><h3>${esc(tt.useTitle)}</h3><p>${esc(tt.useText)}</p></article>
-      <article class="aboutCard"><h3>${esc(tt.compTitle)}</h3><p>${esc(tt.compText)}</p></article>
-      <article class="aboutCard"><h3>${esc(tt.catTitle)}</h3><p>${esc(tt.catText)}</p></article>
-      <article class="aboutCard"><h3>${esc(tt.nbTitle)}</h3><p>${esc(tt.nbText)}</p></article>
-      <article class="aboutCard"><h3>${esc(tt.disclaimerTitle)}</h3><p>${esc(tt.disclaimerText)}</p></article>
-    </section>`;
+  $('#stats').innerHTML = ''; $('#chips').innerHTML = '';
+  $('#results').innerHTML = `<section class="about-grid">
+    <div class="about-card"><h3>${esc(tr().aboutTitle)}</h3><p>${esc(tr().aboutIntro)}</p></div>
+    <div class="about-card"><h3>${esc(tr().howSearch)}</h3><p>${esc(tr().howSearchText)}</p></div>
+    <div class="about-card"><h3>${esc(tr().parentText)}</h3><p>${esc(tr().parentDesc)}</p></div>
+    <div class="about-card"><h3>${esc(tr().categoryText)}</h3><p>${esc(tr().categoryDesc)}</p></div>
+    <div class="about-card"><h3>${esc(tr().disclaimer)}</h3><p>${esc(tr().disclaimerText)}</p></div>
+    <div class="about-card"><h3>Boykot Rehberi</h3><p>${esc(tr().version)}</p><p>${DATA.length} ${esc(tr().brands)}</p></div>
+  </section>`;
 }
-
 function render(){
-  if(view === "companies") return renderGroups("anaFirma");
-  if(view === "categories") return renderGroups("kategori");
-  if(view === "about") return renderAbout();
-  return renderHome();
+  applyLang();
+  $$('.bottom-nav button').forEach(b=>b.classList.toggle('nav-active', b.dataset.view===view));
+  if(view === 'home' || view === 'notBoycotted') renderHome();
+  else if(view === 'companies') renderGroups('company');
+  else if(view === 'categories') renderGroups('category');
+  else if(view === 'groupCompany') renderGroupList('company', selectedTitle);
+  else if(view === 'groupCategory') renderGroupList('category', selectedTitle);
+  else if(view === 'about') renderAbout();
+}
+function showDetail(item){
+  const st = statusMap[getStatus(item)];
+  const source = item.kaynak && /^https?:\/\//i.test(item.kaynak) ? `<a class="source-link" href="${esc(item.kaynak)}" target="_blank" rel="noopener">${esc(tr().openSource)}</a>` : `<div class="detail-row"><span>${esc(tr().source)}</span><b>${esc(item.kaynak || '-')}</b></div>`;
+  $('#detailContent').innerHTML = `<div class="detail-head"><div class="status">${st.icon} ${esc(tr()[st.key])}</div><h2>${esc(item.marka)}</h2></div>
+    <div class="detail-row"><span>${esc(tr().parent)}</span><b>${esc(parentOf(item) || '-')}</b></div>
+    <div class="detail-row"><span>${esc(tr().category)}</span><b>${esc(item.kategori || '-')}</b></div>
+    <div class="detail-row"><span>${esc(tr().code)}</span><b>${esc(item.kod || '-')}</b></div>
+    <div class="detail-row"><span>${esc(tr().alt)}</span><b>${esc(item.alternatif || '-')}</b></div>
+    <div class="detail-row"><span>${esc(tr().note)}</span><b>${esc(item.not || '-')}</b></div>${source}`;
+  $('#detailDialog').showModal();
 }
 
-function showDetail(x){
-  if(!x) return;
-  const tt=tr();
-  const source = x.kaynak && /^https?:\/\//i.test(x.kaynak) ? `<a class="sourceLink" href="${esc(x.kaynak)}" target="_blank" rel="noopener">${esc(tt.open)}</a>` : esc(x.kaynak || "—");
-  document.getElementById("detailContent").innerHTML = `
-    <h2>${statusText(x.durum)}<br>${esc(x.marka)}</h2>
-    <div class="detailRow"><span>${esc(tt.parent)}</span><b>${esc(x.anaFirma || "—")}</b></div>
-    <div class="detailRow"><span>${esc(tt.category)}</span><b>${esc(x.kategori || "—")}</b></div>
-    <div class="detailRow"><span>${esc(tt.code)}</span><b>${esc(x.kod || "—")}</b></div>
-    <div class="detailRow"><span>${esc(tt.alternatives)}</span><b>${esc(x.alternatif || "—")}</b></div>
-    <div class="detailRow"><span>${esc(tt.note)}</span><b>${esc(x.not || "—")}</b></div>
-    <div class="detailRow"><span>${esc(tt.source)}</span><b>${source}</b></div>`;
-  document.getElementById("detailDialog").showModal();
-}
+$('#search').addEventListener('input', () => { if(view !== 'home' && view !== 'notBoycotted') view='home'; render(); });
+$('#clearBtn').addEventListener('click', () => { $('#search').value=''; render(); });
+$('#themeBtn').addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('boykot_theme', theme); document.documentElement.dataset.theme = theme; applyLang(); });
+$$('.lang').forEach(btn => btn.addEventListener('click', () => { lang = btn.dataset.lang; localStorage.setItem('boykot_lang', lang); render(); }));
+$$('.bottom-nav button').forEach(btn => btn.addEventListener('click', () => { view = btn.dataset.view; if(view==='notBoycotted') filter='boykottaDegil'; else if(view==='home') filter='all'; render(); }));
+$('#chips').addEventListener('click', e => { const chip=e.target.closest('[data-filter]'); if(chip){ filter=chip.dataset.filter; render(); } const back=e.target.closest('[data-back]'); if(back){ view = back.dataset.back === 'company' ? 'companies' : 'categories'; render(); }});
+$('#results').addEventListener('click', e => {
+  const group = e.target.closest('[data-group]');
+  if(group){ selectedTitle = decodeURIComponent(group.dataset.group); view = group.dataset.groupField === 'company' ? 'groupCompany' : 'groupCategory'; render(); return; }
+  const cardEl = e.target.closest('[data-brand]');
+  if(cardEl){ const name=decodeURIComponent(cardEl.dataset.brand); const item=DATA.find(x=>x.marka===name); if(item) showDetail(item); }
+});
+$('#closeDialog').addEventListener('click', () => $('#detailDialog').close());
 
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("sw.js").catch(()=>{});
-}
-
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 init();
