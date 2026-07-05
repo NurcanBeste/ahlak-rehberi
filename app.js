@@ -23,7 +23,58 @@ function renderHome(){const list=currentList(); const q=norm(activeQuery || els.
 function groupBy(key){const m=new Map(); for(const item of DATA){const k=item[key]||'Belirtilmemiş'; if(!m.has(k))m.set(k,[]); m.get(k).push(item)} return [...m.entries()].sort((a,b)=>a[0].localeCompare(b[0],'tr'))}
 function renderGroups(kind){const key=kind==='companies'?'anafirma':'kategori'; const title=kind==='companies'?'Ana Firmalar':'Kategoriler'; const groups=groupBy(key); setHeader(title, `${groups.length} başlık`); els.results.className='results'; els.results.innerHTML=groups.map(([name,items])=>`<div class="listItem" data-query="${esc(name)}"><div><b>${esc(name)}</b><br><small>${items.length} marka</small></div><span class="chev">›</span></div>`).join('')}
 function renderFavorites(){const list=currentList(); setHeader('Favoriler', `${list.length} marka`); els.results.className='results cards'; els.results.innerHTML=list.length?list.map(card).join(''):`<div class="empty">Henüz favori eklemedin. Marka kartındaki yıldız işaretine bas.</div>`}
-function renderAbout(){setHeader('Hakkında','Kullanım bilgisi'); els.results.className='results'; els.results.innerHTML=`<div class="card"><h3>Boykot Rehberi</h3><p class="sub">Bu uygulama GitHub Pages üzerinde çalışır. Listeyi güncellemek için sadece <b>data.json</b> dosyasını değiştirmen yeterlidir.</p><div class="tagRow"><span class="tag blue">Alanlar</span><span class="tag">marka</span><span class="tag">anaFirma / anafirma</span><span class="tag">kod</span><span class="tag">kategori</span><span class="tag">alternatif</span></div><div class="altBox"><span>Not</span><b>Uygulama hem anaFirma hem anafirma alanını okur. Bu yüzden liste bozulmaz.</b></div></div>`}
+function renderAbout() {
+    stats.innerHTML = "";
+
+    results.innerHTML = `
+    <div class="about">
+
+        <h2>📖 Kullanım Bilgisi</h2>
+
+        <p>Boykot Rehberi uygulamasına hoş geldiniz.</p>
+
+        <p>Bu uygulama, markalar hakkında hızlı bilgi edinmenize ve alternatif ürünleri kolayca bulmanıza yardımcı olmak amacıyla hazırlanmıştır.</p>
+
+        <h3>🔍 Marka Arama</h3>
+        <p>Arama kutusuna marka, ana firma, kategori veya alternatif ürün yazarak arama yapabilirsiniz.</p>
+
+        <h3>🏢 Ana Firmalar</h3>
+        <p>Ana Firmalar bölümünde aynı şirkete ait tüm markaları görebilirsiniz.</p>
+
+        <h3>📂 Kategoriler</h3>
+        <p>Markaları kategoriye göre filtreleyebilirsiniz.</p>
+
+        <h3>📋 Marka Detayı</h3>
+        <ul>
+            <li>Marka</li>
+            <li>Ana Firma</li>
+            <li>Kategori</li>
+            <li>Kod</li>
+            <li>Alternatif Ürünler</li>
+            <li>Kaynak</li>
+            <li>Not</li>
+        </ul>
+
+        <h3>🟢 Alternatif Ürünler</h3>
+        <p>Alternatif olarak gösterilen ürünler aynı kategoride değerlendirilebilecek seçeneklerdir.</p>
+
+        <h3>🔄 Güncellemeler</h3>
+        <p>Liste düzenli olarak güncellenmektedir. Yeni markalar eklenebilir veya mevcut bilgiler değiştirilebilir.</p>
+
+        <h3>⚠️ Bilgilendirme</h3>
+
+        <p>Bu uygulama yalnızca bilgilendirme amacıyla hazırlanmıştır. Listede yer alan bilgiler farklı kaynaklardan derlenmiştir. Kullanıcıların satın alma kararı vermeden önce güncel bilgileri bağımsız kaynaklardan da doğrulaması tavsiye edilir.</p>
+
+        <br>
+
+        <center>
+            <b>Boykot Rehberi</b><br>
+            Sürüm 1.0
+        </center>
+
+    </div>
+    `;
+}
 function render(){renderStats(); if(view==='companies')return renderGroups('companies'); if(view==='categories')return renderGroups('categories'); if(view==='favorites')return renderFavorites(); if(view==='about')return renderAbout(); return renderHome()}
 function setNav(){document.querySelectorAll('.bottomNav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view))}
 function toggleFav(item){const name=item.marka; favorites=favorites.includes(name)?favorites.filter(x=>x!==name):[...favorites,name]; saveStore('boykot_favorites',favorites); render()}
